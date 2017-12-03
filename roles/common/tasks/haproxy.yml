@@ -1,0 +1,60 @@
+- include_vars: haproxy.pem
+  no_log: yes
+
+- name: haproxy group
+  become: true
+  group:
+    name: docker_haproxy
+    gid: 2010
+    state: present
+
+- name: haproxy user
+  become: true
+  user:
+    name: docker_haproxy
+    uid: 2010
+    groups: docker_haproxy,docker
+
+- name: docker folder for haproxy
+  become: true
+  file:
+    path: /docker/haproxy
+    owner: docker_haproxy
+    group: docker_haproxy
+    state: directory
+    mode: 0755
+
+- name: docker haproxy config file
+  become: true
+  copy:
+    src: files/haproxy/haproxy.cfg
+    dest: /docker/haproxy/haproxy.cfg
+    owner: docker_haproxy
+    group: docker_haproxy
+
+- name: docker haproxy cert
+  become: true
+  copy:
+    content: "{{ pem_contents }}"
+    dest: /docker/haproxy/haproxy.pem
+    owner: docker_haproxy
+    group: docker_haproxy
+
+#- name: deploy docker haproxy instance
+#  become: true
+#  docker_container:
+#    name: haproxy
+#    image: hypriot/rpi-haproxy
+#    state: present
+#    ports:
+#    - "8443:8443"
+#    - "80:80"
+#    volumes:
+#    - /docker/haproxy:/haproxy-override:Z
+#    user: 2010:2010
+
+- name: create the docker haproxy instance
+  become: true
+  shell: "docker ps -a | grep [h]aproxy || docker create --name haproxy -e PGID=2010 -e PUID=2010 -p 8443:8443 -p 80:80 -v /docker/haproxy:/haproxy-override:Z hypriot/rpi-haproxy"
+
+

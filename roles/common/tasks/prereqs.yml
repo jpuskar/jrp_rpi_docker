@@ -1,0 +1,37 @@
+- name: install vim
+  become: true
+  apt:
+    name: vim
+    state: present
+    force: yes
+
+- name: install docker
+  become: true
+  apt:
+    name: docker-ce=17.09.0~ce-0~raspbian
+    state: present
+    force: yes
+
+- name: hold docker at specific version
+  become: true
+  dpkg_selections:
+    name: docker-ce
+    selection: hold
+
+- name: general package updates
+  become: true
+  apt:
+    upgrade: yes
+    update_cache: yes
+
+- name: install git
+  become: true
+  apt:
+    name: git
+    state: present
+
+- name: install docker-compose
+  become: true
+  apt:
+    name: docker-compose
+    state: present

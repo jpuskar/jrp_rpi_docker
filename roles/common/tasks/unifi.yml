@@ -1,0 +1,22 @@
+- name: unifi group
+  become: true
+  group:
+    name: docker_unifi
+    gid: 2000
+    state: present
+
+- name: unifi user
+  become: true
+  user:
+    name: docker_unifi
+    uid: 2000
+    groups: docker_unifi,docker
+
+- name: docker folder for unifi
+  become: true
+  file:
+    path: /docker/unifi
+    owner: docker_unifi
+    group: docker_unifi
+    state: directory
+    mode: 0755
