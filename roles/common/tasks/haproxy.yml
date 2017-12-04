@@ -55,6 +55,6 @@
 
 - name: create the docker haproxy instance
   become: true
-  shell: "docker ps -a | grep [h]aproxy || docker create --name haproxy -e PGID=2010 -e PUID=2010 -p 8443:8443 -p 80:80 -v /docker/haproxy:/haproxy-override:Z hypriot/rpi-haproxy"
+  shell: "docker ps -a | grep [h]aproxy || docker create --name haproxy -e PGID=2010 -e PUID=2010 -p 8443:8443 -p 80:80 -v /docker/haproxy:/haproxy-override:Z --restart=always hypriot/rpi-haproxy"
 
 
