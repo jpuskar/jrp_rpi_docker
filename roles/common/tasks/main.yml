@@ -1,2 +1,2 @@
-#- include: haproxy.yml
 - include: iptables.yml
+- include: haproxy.yml

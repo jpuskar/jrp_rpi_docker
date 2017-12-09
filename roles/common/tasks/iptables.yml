@@ -1,56 +1,31 @@
-#- name: install iptables-persistent
-#  become: true
-#  apt:
-#    name: iptables-persistent
-#    state: present
-
-- name: open ports for haproxy
+# ref: http://blog.nordeus.com/dev-ops/managing-iptables-with-ansible-the-easy-way.htm
+- name: iptables custom
   become: true
-  iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: 8443
-    jump: ACCEPT
+  iptables_raw:
+    name: 'iptables_custom_rules_{{ item.name }}'
+    rules: '{{ item.rules }}'
+    state: '{{ item.state }}'
+    weight: '{{ item.weight|default(omit) }}'
+    table: '{{ item.table|default(omit) }}'
+  with_items: '{{ iptables_custom_rules }}'
+  tags: iptables
 
-- name: open ports for ssh
+- name: Set default iptables head rules
   become: true
-  iptables:
-    chain: INPUT
-    protocol: tcp
-    destination_port: 22
-    jump: ACCEPT
+  iptables_raw:
+    name: iptables_default_head
+    weight: 10
+    keep_unmanaged: '{{ iptables_keep_unmanaged }}'
+    state: present
+    rules: '{{ iptables_default_head }}'
+  tags: iptables
 
-- name: allow loopback in
+- name: Set default iptables tail rules
   become: true
-  iptables:
-    chain: INPUT
-    in_interface: lo
-    jump: ACCEPT
-
-- name: allow loopback out
-  become: true
-  iptables:
-    chain: OUTPUT
-    out_interface: lo
-    jump: ACCEPT
-
-- name: allow established and related
-  become: true
-  iptables:
-    chain: INPUT
-    ctstate: ESTABLISHED,RELATED
-    jump: ACCEPT
-
-- name: block invalid
-  become: true
-  iptables:
-    chain: INPUT
-    ctstate: INVALID
-    jump: DROP
-
-- name: drop input by default
-  become: true
-  iptables:
-    chain: INPUT
-    policy: DROP
-
+  iptables_raw:
+    name: iptables_default_tail
+    weight: 99
+    keep_unmanaged: '{{ iptables_keep_unmanaged }}'
+    state: '{{ (iptables_default_tail != "" ) | ternary("present", "absent") }}'
+    rules: '{{ iptables_default_tail }}'
+  tags: iptables

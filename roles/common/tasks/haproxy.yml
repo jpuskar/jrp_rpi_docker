@@ -1,6 +1,42 @@
 - include_vars: haproxy.pem
   no_log: yes
 
+- name: rsyslog_enable_udp
+  become: true
+  lineinfile:
+    path: /etc/rsyslog.conf
+    regexp: '^(#){0,1}module\(load="imudp"\)'
+    line: 'module(load="imudp")'
+
+- name: rsyslog_enable_udp_514
+  become: true
+  lineinfile:
+    path: /etc/rsyslog.conf
+    regexp: '^(#){0,1}input\(type="imudp" port="514"\)'
+    line: 'input(type="imudp" port="514")'
+
+- name: rsyslog_local_udp_only
+  become: true
+  lineinfile:
+    path: /etc/rsyslog.conf
+    line: '$UDPServerAddress 127.0.0.1'
+    insertafter: '^(#){0,1}input\(type="imudp" port="514"\)'
+
+- name: rsyslog_udp_server_run
+  become: true
+  lineinfile:
+    path: /etc/rsyslog.conf
+    line: '$UDPServerRun 514'
+    insertafter: '^\$UDPServerAddress 127\.0\.0\.1'
+
+- name: rsyslog_haproxy
+  become: true
+  copy:
+    content: "local2.*    /var/log/haproxy.log"
+    dest: "/etc/rsyslog.d/haproxy.conf"
+
+# TODO: restart rsyslog
+
 - name: haproxy group
   become: true
   group:
@@ -40,21 +76,6 @@
     owner: docker_haproxy
     group: docker_haproxy
 
-#- name: deploy docker haproxy instance
-#  become: true
-#  docker_container:
-#    name: haproxy
-#    image: hypriot/rpi-haproxy
-#    state: present
-#    ports:
-#    - "8443:8443"
-#    - "80:80"
-#    volumes:
-#    - /docker/haproxy:/haproxy-override:Z
-#    user: 2010:2010
-
 - name: create the docker haproxy instance
   become: true
-  shell: "docker ps -a | grep [h]aproxy || docker create --name haproxy -e PGID=2010 -e PUID=2010 -p 8443:8443 -p 80:80 -v /docker/haproxy:/haproxy-override:Z --restart=always hypriot/rpi-haproxy"
-
-
+  shell: "docker ps -a | grep [h]aproxy || docker create --name haproxy -e PGID=2010 -e PUID=2010 -p 8443:8443 -p 80:80 -v /docker/haproxy:/haproxy-override:Z -v /dev/log:/dev/log:Z --restart=always hypriot/rpi-haproxy"
